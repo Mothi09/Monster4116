@@ -1,1 +1,201 @@
-<h>hi.</h>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mortis</title>
+  <style>
+    :root {
+      --bg: #07060a;
+      --symbol-bg: #18001f;
+      --symbol-color: #bda0ff;
+      --accent: #8f47c9;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(circle at center, #0d0013, var(--bg));
+      color: white;
+      font-family: monospace;
+      overflow: hidden;
+    }
+    .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    .puzzle {
+      position: relative;
+      width: 520px;
+      height: 520px;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    .symbol {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      background: var(--symbol-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: var(--symbol-color);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 0 15px rgba(80,0,120,0.25);
+    }
+    .symbol:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(140,0,255,0.4);
+    }
+    .center {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .display {
+      margin-top: 10px;
+      padding: 6px 12px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 8px;
+      min-width: 120px;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .display.shake {
+      animation: shake 0.5s ease;
+    }
+    @keyframes shake {
+      0%,100%{transform:translateX(0);}
+      10%,30%,50%,70%,90%{transform:translateX(-12px);}
+      20%,40%,60%,80%{transform:translateX(12px);}
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+    .modal.show { display: flex; }
+    .clue {
+      background: #150018;
+      padding: 24px;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      color: white;
+      box-shadow: 0 0 40px rgba(160,0,255,0.4);
+      max-width: 420px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="puzzle" id="puzzle">
+      <svg viewBox="-260 -260 520 520" xmlns="http://www.w3.org/2000/svg">
+        <path id="star" fill="none" stroke="rgba(160,80,255,0.7)" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <div class="center">
+        <div>ENTER CODE</div>
+        <div class="display" id="display">&nbsp;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="clue">
+      <h2>Correct</h2>
+      <p>華)$Kリ</p>
+    </div>
+  </div>
+
+  <script>
+    const correctCode = "27631";
+    const display = document.getElementById("display");
+    const modal = document.getElementById("modal");
+    const puzzle = document.getElementById("puzzle");
+    const svgPath = document.getElementById("star");
+
+    // coordinates for 9 points
+    const pts = [];
+    const R = 200;
+    for (let i = 0; i < 9; i++) {
+      const angle = (-90 + i * (360 / 9)) * Math.PI / 180;
+      pts.push({x: Math.cos(angle) * R, y: Math.sin(angle) * R});
+    }
+
+    // Draw 9-point star path (every 4th point)
+    let d = "";
+    let order = [];
+    let cur = 0;
+    for (let i = 0; i < 9; i++) { order.push(cur); cur = (cur + 4) % 9; }
+    d += `M ${pts[order[0]].x} ${pts[order[0]].y} `;
+    for (let i = 1; i < order.length; i++) {
+      d += `L ${pts[order[i]].x} ${pts[order[i]].y} `;
+    }
+    d += "Z";
+    svgPath.setAttribute("d", d);
+
+    // Random readable symbols
+    const symbols = ["#", "Δ", "Ψ", "λ", "⍟", "Ж", "Ω", "∴", "Ϟ"];
+
+    // Place symbols
+    pts.forEach((p, i) => {
+      const btn = document.createElement("div");
+      btn.className = "symbol";
+      btn.textContent = symbols[i];
+      btn.style.left = `calc(50% + ${p.x}px - 35px)`;
+      btn.style.top = `calc(50% + ${p.y}px - 35px)`;
+      btn.dataset.num = i + 1;
+      puzzle.appendChild(btn);
+
+      btn.addEventListener("click", () => {
+        input += btn.dataset.num;
+        updateDisplay();
+        checkCode();
+      });
+    });
+
+    let input = "";
+
+    function updateDisplay() {
+      display.textContent = input || " ";
+    }
+
+    function shakeDisplay() {
+      display.classList.add("shake");
+      setTimeout(() => {
+        display.classList.remove("shake");
+        input = "";
+        updateDisplay();
+      }, 500);
+    }
+
+    function checkCode() {
+      if (input.endsWith(correctCode)) {
+        modal.classList.add("show");
+      }
+      if (input.length >= 9) shakeDisplay();
+    }
+
+    window.addEventListener("keydown", e => {
+      if (e.key >= "1" && e.key <= "9") {
+        input += e.key;
+        updateDisplay();
+        checkCode();
+      }
+    });
+
+    modal.addEventListener("click", () => modal.classList.remove("show"));
+  </script>
+</body>
+</html>
