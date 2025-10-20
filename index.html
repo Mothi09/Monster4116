@@ -95,6 +95,20 @@
       color: white;
       box-shadow: 0 0 40px rgba(160,0,255,0.4);
       max-width: 420px;
+      text-align: center;
+      user-select: text;
+    }
+    button {
+      margin-top: 16px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: var(--accent);
     }
   </style>
 </head>
@@ -111,10 +125,21 @@
     </div>
   </div>
 
+  <!-- first modal -->
   <div class="modal" id="modal">
     <div class="clue">
-      <h2>Correct</h2>
+      <h2>swag</h2>
       <p>華)$Kリ</p>
+      <button id="continueBtn">Continue</button>
+    </div>
+  </div>
+
+  <!-- second modal -->
+  <div class="modal" id="finalModal">
+    <div class="clue">
+      <h2>next clue.</h2>
+      <p id="realClue">華)$Kリ</p>
+      <button id="exitBtn">Exit</button>
     </div>
   </div>
 
@@ -122,10 +147,10 @@
     const correctCode = "27631";
     const display = document.getElementById("display");
     const modal = document.getElementById("modal");
+    const finalModal = document.getElementById("finalModal");
     const puzzle = document.getElementById("puzzle");
     const svgPath = document.getElementById("star");
 
-    // coordinates for 9 points
     const pts = [];
     const R = 200;
     for (let i = 0; i < 9; i++) {
@@ -133,22 +158,17 @@
       pts.push({x: Math.cos(angle) * R, y: Math.sin(angle) * R});
     }
 
-    // Draw 9-point star path (every 4th point)
     let d = "";
     let order = [];
     let cur = 0;
     for (let i = 0; i < 9; i++) { order.push(cur); cur = (cur + 4) % 9; }
     d += `M ${pts[order[0]].x} ${pts[order[0]].y} `;
-    for (let i = 1; i < order.length; i++) {
-      d += `L ${pts[order[i]].x} ${pts[order[i]].y} `;
-    }
+    for (let i = 1; i < order.length; i++) d += `L ${pts[order[i]].x} ${pts[order[i]].y} `;
     d += "Z";
     svgPath.setAttribute("d", d);
 
-    // Random readable symbols
     const symbols = ["#", "Δ", "Ψ", "λ", "⍟", "Ж", "Ω", "∴", "Ϟ"];
 
-    // Place symbols
     pts.forEach((p, i) => {
       const btn = document.createElement("div");
       btn.className = "symbol";
@@ -187,6 +207,17 @@
       if (input.length >= 9) shakeDisplay();
     }
 
+    document.getElementById("continueBtn").addEventListener("click", () => {
+      modal.classList.remove("show");
+      finalModal.classList.add("show");
+    });
+
+    document.getElementById("exitBtn").addEventListener("click", () => {
+      finalModal.classList.remove("show");
+      input = "";
+      updateDisplay();
+    });
+
     window.addEventListener("keydown", e => {
       if (e.key >= "1" && e.key <= "9") {
         input += e.key;
@@ -194,8 +225,6 @@
         checkCode();
       }
     });
-
-    modal.addEventListener("click", () => modal.classList.remove("show"));
   </script>
 </body>
 </html>
